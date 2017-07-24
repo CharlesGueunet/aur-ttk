@@ -13,7 +13,7 @@ arch=('i686' 'x86_64')
 url='https://topology-tool-kit.github.io/'
 license=('bsd')
 
-depends=('vtk' 'paraview-ttk')
+depends=('vtk>=7' 'qt5-webkit' 'paraview-ttk')
 makedepends=('cmake' 'git')
 
 install=ttk.install
@@ -27,28 +27,40 @@ package_ttk() {
     cd "${srcdir}/build-ttk"
 
     # plugins
-    ttk_suffix="/usr/lib/ttk"
-    plugins_suffix="${ttk_suffix}/plugins"
-    plugins_path="${pkgdir}${plugins_suffix}"
+    ttk_prefix="/usr/lib/ttk"
+    ttk_plugins="plugins"
+    plugins_dir="${ttk_prefix}/${ttk_plugins}"
+    install_dir="${pkgdir}${plugins_dir}"
+
+    # flags to enable system libs
+    # add PROTOBUF when https://gitlab.kitware.com/paraview/paraview/issues/13656 gets fixed
+    local VTK_USE_SYSTEM_LIB=""
+    for lib in EXPAT FREETYPE GLEW HDF5 JPEG LIBXML2 OGGTHEORA PNG TIFF ZLIB; do
+        VTK_USE_SYSTEM_LIB+="-DVTK_USE_SYSTEM_${lib}:BOOL=ON "
+    done
+
+    msg "Build TTK..."
+    msg2 "Configuration"
 
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_COMPILER=mpicc \
         -DCMAKE_CXX_COMPILER=mpicxx \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-        -DCMAKE_INSTALL_PREFIX:PATH=${ttk_suffix} \
-        -DParaView_DIR="${srcdir}/build-paraview" \
-        -DVTK_DIR="${srcdir}/build-vtk" \
-        -DwithVTK=1 \
-        -DwithVTKGUI=1 \
-        -DwithVTKCMD=1 \
+        -DCMAKE_INSTALL_PREFIX:PATH="" \
+        -DwithMPI=ON \
+        -DwithKamikaze=ON \
+        ${VTK_USE_SYSTEM_LIB} \
         ../ttk-${_ttk_ver}
 
-    make DESTDIR="${plugins_path}" install
+    msg2 "Compilation"
 
-    # add plugins location for paraview
-    ttk_plugins="/lib/paraview-${_paraview_ver%\.[0-9]}/plugins"
+    make DESTDIR="${install_dir}" install
+
+    msg2 "Finishing..."
+    msg2 "Add plugins to Paraview"
+
     env_path="${pkgdir}/etc/profile.d"
     mkdir -p ${env_path}
-    echo "export PV_PLUGIN_PATH='${plugins_suffix}${ttk_plugins}'" > "${env_path}/ttk.sh"
+    echo "export PV_PLUGIN_PATH='${plugins_dir}/usr/lib/paraview-5.3/plugins'" > "${env_path}/ttk.sh"
 }
