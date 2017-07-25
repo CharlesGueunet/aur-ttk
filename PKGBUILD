@@ -5,7 +5,7 @@
 # in your /etc/makepkg.conf to allow parallel build
 
 pkgname=('ttk')
-_ttk_ver=0.9.1
+_ttk_ver=0.9.2
 pkgver=${_ttk_ver}
 pkgrel=1
 pkgdesc='the Topology ToolKit: plugins suite for Paraview and VTK.'
@@ -18,8 +18,8 @@ makedepends=('cmake' 'git')
 
 install=ttk.install
 
-source=("ttk::https://topology-tool-kit.github.io/stuff/ttk-${_ttk_ver}.tar.gz")
-sha1sums=('ea0b1eb37a3e326cee6de8e694a64168c1f91134')
+source=("https://codeload.github.com/topology-tool-kit/ttk/tar.gz/v${_ttk_ver}")
+sha1sums=('ba24f0234b69f18e483cee8a5d6ddff9ef129a04')
 
 package_ttk() {
 
@@ -62,5 +62,5 @@ package_ttk() {
 
     env_path="${pkgdir}/etc/profile.d"
     mkdir -p ${env_path}
-    echo "export PV_PLUGIN_PATH='${plugins_dir}/usr/lib/paraview-5.3/plugins'" > "${env_path}/ttk.sh"
+    echo "export PV_PLUGIN_PATH='${plugins_dir}/usr/lib/paraview-5.4/plugins'" > "${env_path}/ttk.sh"
 }
